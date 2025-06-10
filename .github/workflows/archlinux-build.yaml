@@ -1,0 +1,68 @@
+name: Build on archlinux
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  meson-build:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Update system and install dependencies
+      run: |
+        pacman -Syu --noconfirm
+        pacman -S --noconfirm \
+          base-devel \
+          meson \
+          ninja \
+          gcc \
+          clang \
+          pkg-config \
+          wayland \
+          wayland-protocols \
+          mesa \
+          cppcheck
+
+    - name: Build with GCC
+      run: |
+        CC=gcc meson setup build-gcc \
+          --buildtype=debug \
+          --fatal-meson-warnings \
+          --default-library=both \
+          --prefix=/usr
+        ninja -C build-gcc -v
+
+    - name: Build with Clang
+      run: |
+        CC=clang meson setup build-clang \
+          --buildtype=debug \
+          --fatal-meson-warnings \
+          --default-library=both \
+          --prefix=/usr
+        ninja -C build-clang -v
+
+    - name: Run tests (GCC)
+      run: ninja -C build-gcc test
+      continue-on-error: true
+
+    - name: Run tests (Clang)
+      run: ninja -C build-clang test
+      continue-on-error: true
+
+    - name: Run static analysis (cppcheck)
+      run: |
+        cppcheck --project=build-clang/compile_commands.json \
+          --enable=all \
+          --inconclusive \
+          --error-exitcode=1
+      continue-on-error: true
