@@ -42,3 +42,4 @@ wayland_cursor = dependency('wayland-cursor', required: true)
 wayland_egl = dependency('wayland-egl', required: true)
 
 subdir('egl_render')
+subdir('alpha_modifier')
