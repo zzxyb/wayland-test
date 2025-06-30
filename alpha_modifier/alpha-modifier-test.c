@@ -222,12 +222,16 @@ static void
 decoration_configure(void *data, struct zxdg_toplevel_decoration_v1 *decoration,
                      uint32_t mode)
 {
-	printf("Decoration configured with mode: %u\n", mode);
+	//printf("Decoration configured with mode: %u\n", mode);
 	if (mode == ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE) {
+		return;
 		printf("Server-side decorations enabled\n");
 	} else if (mode == ZXDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE) {
 		printf("Client-side decorations enabled\n");
 	}
+	struct alpha_test_client *client = data;
+	zxdg_toplevel_decoration_v1_set_mode(client->toplevel_decoration,
+			ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
 }
 
 static const struct zxdg_toplevel_decoration_v1_listener decoration_listener = {
