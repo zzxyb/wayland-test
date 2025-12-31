@@ -43,3 +43,4 @@ wayland_egl = dependency('wayland-egl', required: true)
 
 subdir('egl_render')
 subdir('alpha_modifier')
+subdir('surface_set_position')
