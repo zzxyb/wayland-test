@@ -8,7 +8,7 @@
 
 #include <EGL/egl.h>
 
-int main() {
+int main(int argc, char *argv[]) {
 	struct wl_display *display = wl_display_connect(NULL);
 	if (display == NULL) {
 		fprintf(stderr, "Can't connect to display\n");
