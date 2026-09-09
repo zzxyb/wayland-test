@@ -44,6 +44,7 @@ struct maximized_client {
 	bool maximized;
 	bool pointer_on_surface;
 	bool maximize_button_pressed;
+	bool restore_to_default_size;
 	bool running;
 };
 
@@ -237,6 +238,8 @@ redraw(struct maximized_client *client)
 	}
 
 	wl_surface_attach(client->surface, client->buffer, 0, 0);
+	xdg_surface_set_window_geometry(client->xdg_surface, 0, 0,
+	                                client->width, client->height);
 	wl_surface_damage_buffer(client->surface, 0, 0, client->width, client->height);
 	wl_surface_commit(client->surface);
 }
@@ -339,10 +342,12 @@ pointer_handle_button(void *data, struct wl_pointer *pointer, uint32_t serial,
 	    !point_in_maximize_button(client, client->pointer_x, client->pointer_y))
 		return;
 
-	if (client->maximized)
+	if (client->maximized) {
+		client->restore_to_default_size = true;
 		xdg_toplevel_unset_maximized(client->xdg_toplevel);
-	else
+	} else {
 		xdg_toplevel_set_maximized(client->xdg_toplevel);
+	}
 }
 
 static void
@@ -420,14 +425,20 @@ xdg_toplevel_configure(void *data, struct xdg_toplevel *xdg_toplevel,
 {
 	struct maximized_client *client = data;
 	uint32_t *state;
-
-	client->width = width > 0 ? width : FALLBACK_WIDTH;
-	client->height = height > 0 ? height : FALLBACK_HEIGHT;
-	client->maximized = false;
+	bool is_maximized = false;
 
 	wl_array_for_each(state, states) {
 		if (*state == XDG_TOPLEVEL_STATE_MAXIMIZED)
-			client->maximized = true;
+			is_maximized = true;
+	}
+
+	client->maximized = is_maximized;
+	if (client->restore_to_default_size && !is_maximized) {
+		client->width = FALLBACK_WIDTH;
+		client->height = FALLBACK_HEIGHT;
+	} else {
+		client->width = width > 0 ? width : FALLBACK_WIDTH;
+		client->height = height > 0 ? height : FALLBACK_HEIGHT;
 	}
 
 	printf("configure: %dx%d, maximized=%s\n",
@@ -455,6 +466,8 @@ xdg_surface_configure(void *data, struct xdg_surface *xdg_surface, uint32_t seri
 	xdg_surface_ack_configure(xdg_surface, serial);
 	client->configured = true;
 	redraw(client);
+	if (!client->maximized)
+		client->restore_to_default_size = false;
 }
 
 static const struct xdg_surface_listener xdg_surface_listener = {
