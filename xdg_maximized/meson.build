@@ -1,5 +1,6 @@
 wayland_protocols = dependency('wayland-protocols')
 wayland_scanner = dependency('wayland-scanner', native: true)
+cairo = dependency('cairo')
 wayland_scanner_prog = find_program(wayland_scanner.get_variable('wayland_scanner'), required: true)
 
 wayland_protocols_datadir = wayland_protocols.get_variable('pkgdatadir')
@@ -23,6 +24,6 @@ xdg_shell_code = custom_target(
 xdg_maximized_test = executable(
 	'xdg-maximized-test',
 	['xdg-maximized-test.c', xdg_shell_client_header, xdg_shell_code],
-	dependencies: [wayland_client],
+	dependencies: [wayland_client, cairo],
 	include_directories: include_directories('.')
 )

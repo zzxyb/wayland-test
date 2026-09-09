@@ -30,6 +30,7 @@ jobs:
           pkg-config \
           wayland \
           wayland-protocols \
+          cairo \
           mesa \
           cppcheck
 
