@@ -60,6 +60,17 @@ point_in_maximize_button(const struct maximized_client *client,
 	       y < TITLEBAR_HEIGHT - TITLEBAR_BUTTON_MARGIN;
 }
 
+static bool
+point_in_draggable_titlebar(const struct maximized_client *client,
+                            wl_fixed_t surface_x, wl_fixed_t surface_y)
+{
+	double x = wl_fixed_to_double(surface_x);
+	double y = wl_fixed_to_double(surface_y);
+
+	return x >= 0 && x < client->width && y >= 0 && y < TITLEBAR_HEIGHT &&
+	       !point_in_maximize_button(client, surface_x, surface_y);
+}
+
 static void
 draw_restore_icon(cairo_t *cr, double x, double y)
 {
@@ -328,6 +339,10 @@ pointer_handle_button(void *data, struct wl_pointer *pointer, uint32_t serial,
 		client->maximize_button_pressed = client->pointer_on_surface &&
 			point_in_maximize_button(client, client->pointer_x,
 			                         client->pointer_y);
+		if (!client->maximize_button_pressed && client->pointer_on_surface &&
+		    point_in_draggable_titlebar(client, client->pointer_x,
+		                                client->pointer_y))
+			xdg_toplevel_move(client->xdg_toplevel, client->seat, serial);
 		return;
 	}
 
